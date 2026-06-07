@@ -159,36 +159,62 @@ st.markdown("## 📥 Behavioral Input (3-Day Average)")
 
 if input_type == "Manual Input (3 Days)":
 
-    def input_3day(feature):
+    def input_3day(feature, unit=""):
+
         c1, c2, c3 = st.columns(3)
 
         with c1:
-            d1 = st.number_input(f"{feature} - Day 1 (min)", 0.0, key=feature+"1")
-        with c2:
-            d2 = st.number_input(f"{feature} - Day 2 (min)", 0.0, key=feature+"2")
-        with c3:
-            d3 = st.number_input(f"{feature} - Day 3 (min)", 0.0, key=feature+"3")
+            d1 = st.number_input(
+                f"{feature} - Day 1 {unit}",
+                min_value=0.0,
+                value=None,
+                placeholder="Enter value",
+                key=feature+"1"
+            )
 
-        return (d1 + d2 + d3) / 3
+        with c2:
+            d2 = st.number_input(
+                f"{feature} - Day 2 {unit}",
+                min_value=0.0,
+                value=None,
+                placeholder="Enter value",
+                key=feature+"2"
+            )
+
+        with c3:
+            d3 = st.number_input(
+                f"{feature} - Day 3 {unit}",
+                min_value=0.0,
+                value=None,
+                placeholder="Enter value",
+                key=feature+"3"
+            )
+
+        values = [d1, d2, d3]
+
+        # replace None with 0 safely
+        values = [0 if v is None else v for v in values]
+
+        return sum(values) / 3
     
-    screen = input_3day("Screen Time (minutes)")
-    conv = input_3day("Conversation (minutes)")
-    mobility = input_3day("Mobility (km)")
-    dark = input_3day("Dark Time (hours)")
-    stress_avg = input_3day("Recent Stress Level")
+    screen = input_3day("Screen Time", "(minutes)")
+    conv = input_3day("Conversation", "(minutes)")
+    mobility = input_3day("Mobility", "(km)")
+    dark = input_3day("Dark Time", "(hours)")
+    app_usage = input_3day("App Usage", "(minutes)")
 
     input_data = pd.DataFrame([[
         screen,
         conv,
         mobility,
         dark,
-        stress_avg
+        app_usage
     ]], columns=[
         "screen_time_total",
         "average_conversation_duration",
         "total_distance_km",
         "avg_dark_time",
-        "stress_3day_avg"
+        "app_usage"
     ])
 
     # screen = input_3day("Screen Time")
@@ -214,13 +240,10 @@ else:
             "average_conversation_duration",
             "total_distance_km",
             "avg_dark_time",
-            "stress_3day_avg"
+            "app_usage"
         ]
 
         input_data = input_data[required_cols]
-
-        # Use correct baseline
-        stress_avg = input_data["stress_3day_avg"].iloc[0]
 
     else:
         input_data = None
@@ -255,12 +278,10 @@ if st.button("🚀 Analyze Stress", use_container_width=True):
         pred = meta_model.predict(meta_input)[0]
 
 
-        personalized = pred - stress_avg
-
-        if personalized < -0.5:
+        if pred < 1.5:
             risk = "Low"
             color = "#22c55e"
-        elif personalized < 0.5:
+        elif pred < 3.0:
             risk = "Medium"
             color = "#eab308"
         else:
@@ -287,8 +308,8 @@ if st.button("🚀 Analyze Stress", use_container_width=True):
         with c2:
             st.markdown(f"""
             <div class="metric-card-blue">
-            <h4>Baseline (3-Day Avg)</h4>
-            <h2>{stress_avg:.2f}</h2>
+            <h4>Selected Model</h4>
+            <h2>{model_choice}</h2>
             </div>
             """, unsafe_allow_html=True)
 
@@ -303,14 +324,14 @@ if st.button("🚀 Analyze Stress", use_container_width=True):
         
         # VISUAL
         
-        st.markdown("## 📈 Stress Comparison")
+        st.markdown("## 📈 Stress Bar")
 
         chart = pd.DataFrame({
-            "Type": ["Predicted", "Baseline"],
-            "Value": [pred, stress_avg]
+            "Metric": ["Predicted Stress"],
+            "Value": [pred]
         })
 
-        st.bar_chart(chart.set_index("Type"))
+        st.bar_chart(chart.set_index("Metric"))
 
         
         # EXPLANATION
@@ -331,7 +352,7 @@ if st.button("🚀 Analyze Stress", use_container_width=True):
                 "Conversation",
                 "Mobility",
                 "Dark Time",
-                "Recent Stress"
+                "App Usage"
             ]
 
             shap_df = pd.DataFrame({

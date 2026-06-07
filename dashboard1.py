@@ -18,14 +18,17 @@ import joblib
 base_models = joblib.load("base_models.pkl")
 scaler = joblib.load("scaler.pkl")
 
+
 # PAGE CONFIG
 st.set_page_config(
-    page_title="NeuroTrack",
+    page_title="Interpretable Stacked Ensemble for Personlized Stress Prediction",
     layout="wide",
     page_icon="🧠"
 )
 
+
 # 🎨 CALM UI THEME (SAGE + BLUE)
+
 st.markdown("""
 <style>
 
@@ -36,7 +39,7 @@ st.markdown("""
 
 /* Text */
 h1, h2, h3, p {
-    color: ffffff;
+    color: #1f2937;
 }
 
 /* Cards */
@@ -77,12 +80,33 @@ h1, h2, h3, p {
             color: #000000;
             }
 }
+            
+/* dropdown going behind */
+div[data-baseweb="select"] {
+    z-index: 9999 !important;
+}
+
+/* popover */
+div[data-baseweb="popover"] {
+    z-index: 9999 !important;
+}
+            
+/* Sidebar dropdown fix */
+section[data-testid="stSidebar"] {
+    z-index: 10000 !important;
+}
+
+/* Ensure sidebar content stays above */
+section[data-testid="stSidebar"] * {
+    z-index: 10000 !important;
+}
 
 </style>
 """, unsafe_allow_html=True)
 
 
 # HEADER
+
 st.markdown("""
 # 🧠 Interpretable Stacked Ensemble for Personlized Stress Prediction
 ### Personalized Stress Intelligence Platform
@@ -294,7 +318,9 @@ if st.button("🚀 Analyze Stress", use_container_width=True):
         st.markdown("## 🧠 AI Insights")
 
         try:
-    # Using RandomForest from base models (stable for SHAP)
+            # Fix input shape
+            X_input = np.array(X_input).reshape(1, -1)
+
             rf_model = base_models[-1]
 
             explainer = shap.TreeExplainer(rf_model)
@@ -316,16 +342,15 @@ if st.button("🚀 Analyze Stress", use_container_width=True):
             shap_df["abs"] = shap_df["Impact"].abs()
             shap_df = shap_df.sort_values("abs", ascending=True)
 
-            # 📊 Plot
+            # Plot
             fig, ax = plt.subplots()
-
             ax.barh(shap_df["Feature"], shap_df["Impact"])
             ax.set_title("Feature Contribution to Stress")
-            ax.set_xlabel("Impact on Prediction")
+            ax.set_xlabel("Impact")
 
             st.pyplot(fig)
 
-            # 🧾 Text explanation
+            # Text explanation
             st.markdown("### 🔍 Key Factors")
 
             top = shap_df.sort_values("abs", ascending=False).head(3)
@@ -335,6 +360,6 @@ if st.button("🚀 Analyze Stress", use_container_width=True):
                 st.write(f"- {row['Feature']} **{direction}** your stress")
 
         except Exception as e:
-            st.warning("SHAP explanation could not be generated.")
+            st.error(f"SHAP ERROR: {e}")
 
         st.success("Analysis complete ✔")

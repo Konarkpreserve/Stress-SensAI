@@ -23,7 +23,7 @@ selected_features = [
     "average_conversation_duration",
     "total_distance_km",
     "avg_dark_time",
-    "stress_3day_avg"
+    "app_usage"
 ]
 
 X = df[selected_features]
