@@ -1,0 +1,20 @@
+[
+    {
+        "timestamp": "2026-06-22 00:41",
+        "prediction": 2.5018688819983192,
+        "screen_time": 123.0,
+        "conversation": 123.0,
+        "mobility": 16.0,
+        "dark_time": 2.0,
+        "app_usage": 123.0
+    },
+    {
+        "timestamp": "2026-06-22 22:11",
+        "prediction": 2.05,
+        "screen_time": 339.0,
+        "conversation": 123.0,
+        "mobility": 7.0,
+        "dark_time": 7.333333333333333,
+        "app_usage": 123.0
+    }
+]

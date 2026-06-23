@@ -29,7 +29,7 @@ selected_features = [
 X = df[selected_features]
 y = df["stress_level"]
 
-X.fillna(0, inplace=True)
+X = X.fillna(0)
 
 # ===============================
 # SCALER
