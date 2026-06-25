@@ -14,9 +14,9 @@ from utils import (
 from charts import comparison_chart
 
 
-# =====================================================
+
 # HABIT OPTIMIZER
-# =====================================================
+
 
 def habit_optimizer(
 
@@ -53,9 +53,9 @@ how your predicted stress changes.
 
     )
 
-# =====================================================
+
 # FEATURE SELECTION
-# =====================================================
+
 
     col1, col2 = st.columns([2,1])
 
@@ -89,9 +89,9 @@ how your predicted stress changes.
 
         )
 
-# =====================================================
+
 # SLIDER
-# =====================================================
+
 
     target = st.slider(
 
@@ -107,9 +107,9 @@ how your predicted stress changes.
 
     )
 
-# =====================================================
+
 # INFO
-# =====================================================
+
 
     if feature == "Screen Time":
 
@@ -151,9 +151,9 @@ how your predicted stress changes.
 
         )
 
-# =====================================================
+
 # BUTTON
-# =====================================================
+
 
     if st.button(
 
@@ -193,9 +193,9 @@ how your predicted stress changes.
 
         result = response.json()
 
-# =====================================================
+
 # RESULTS
-# =====================================================
+
 
         st.markdown("---")
 
@@ -253,9 +253,9 @@ how your predicted stress changes.
 
             )
 
-# =====================================================
+
 # WELLNESS
-# =====================================================
+
 
         st.markdown("## ❤️ Wellness Improvement")
 
@@ -289,9 +289,9 @@ how your predicted stress changes.
 
         )
 
-# =====================================================
+
 # COMPARISON CHART
-# =====================================================
+
 
         comparison_chart(
 
@@ -301,9 +301,9 @@ how your predicted stress changes.
 
         )
 
-# =====================================================
+
 # AI FEEDBACK
-# =====================================================
+
 
         st.markdown("## 🤖 AI Wellness Coach")
 
@@ -371,9 +371,9 @@ Consider improving another lifestyle factor.
 
 """)
 
-# =====================================================
+
 # SUMMARY
-# =====================================================
+
 
         st.markdown("---")
 

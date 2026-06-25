@@ -1,0 +1,13 @@
+streamlit
+
+requests
+
+pandas
+numpy
+
+matplotlib
+shap
+
+reportlab
+
+scikit-learn

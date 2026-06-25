@@ -82,9 +82,9 @@ require_login()
 
 token = get_token()
 
-# ===================================
+
 # SESSION STATE
-# ===================================
+
 
 if "analysis" not in st.session_state:
     st.session_state["analysis"] = None
@@ -156,9 +156,9 @@ f"Last Analysis: {datetime.now().strftime('%d %B %Y • %I:%M %p')}"
 )
 
 
-# =====================================================
+
 # SIDEBAR
-# =====================================================
+
 
 st.sidebar.markdown(
 f"""
@@ -200,9 +200,9 @@ unsafe_allow_html=True
 
 )
 
-# ===================================
+
 # ACCOUNT SUMMARY
-# ===================================
+
 
 st.sidebar.markdown("### 📊 Account Summary")
 
@@ -228,9 +228,9 @@ with col2:
 
 st.sidebar.markdown("---")
 
-# ===================================
+
 # PROFILE UPDATE
-# ===================================
+
 
 st.sidebar.markdown("### ✏️ Update Profile")
 
@@ -272,9 +272,9 @@ if st.sidebar.button(
 
 st.sidebar.markdown("---")
 
-# ===================================
+
 # INPUT METHOD
-# ===================================
+
 
 st.sidebar.markdown("### ⚙️ Input Method")
 
@@ -674,9 +674,9 @@ if analyze:
 
     ).json()
 
-# ===================================
+
 # LOAD LAST ANALYSIS
-# ===================================
+
 
 if st.session_state["analysis"] is not None:
 
@@ -703,9 +703,9 @@ if st.session_state["analysis"] is not None:
     analytics = get_analytics(token).json()
 
 
-# =====================================================
+
 # RESULTS DASHBOARD
-# =====================================================
+
 
     st.markdown("---")
 
@@ -783,17 +783,17 @@ if st.session_state["analysis"] is not None:
     )
 
 
-# =====================================================
+
 # AI EXPLAINABILITY
-# =====================================================
+
 
     st.markdown("---")
 
     st.markdown("# 🧠 AI Explainability & Analytics")
 
-    # =====================================================
+    
     # ROW 1
-    # =====================================================
+    
 
     left,right = st.columns([1.2,1])
 
@@ -813,9 +813,9 @@ if st.session_state["analysis"] is not None:
 
         )
 
-    # =====================================================
+    
     # ROW 2
-    # =====================================================
+    
 
     st.markdown("<br>",unsafe_allow_html=True)
 
@@ -847,9 +847,9 @@ if st.session_state["analysis"] is not None:
 
             )
 
-    # =====================================================
+    
     # ROW 3
-    # =====================================================
+    
 
     st.markdown("<br>",unsafe_allow_html=True)
 
@@ -896,9 +896,9 @@ if st.session_state["analysis"] is not None:
     )
 
 
-# =====================================================
+
 # EXPORT CENTER
-# =====================================================
+
 
     st.markdown("---")
 
