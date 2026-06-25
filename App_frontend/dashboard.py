@@ -1,500 +1,1032 @@
-import requests
-import json
-import os
-from datetime import datetime
+
 import streamlit as st
 import pandas as pd
-import numpy as np
-import shap
-import matplotlib.pyplot as plt
+from datetime import datetime
 
-from sklearn.linear_model import Lasso
-from sklearn.svm import SVR
-from sklearn.ensemble import RandomForestRegressor
+from styles import load_css
 
+from auth import (
+    require_login,
+    get_token,
+    logout_button
+)
 
+from api import (
+    get_profile,
+    update_profile,
+    predict,
+    get_history,
+    get_analytics
+)
 
-# PAGE CONFIG
-st.set_page_config(
-    page_title="Interpretable Stacked Ensemble for Personlized Stress Prediction",
-    layout="wide",
-    page_icon="🧠"
+from components import (
+    metric_cards,
+    wellness_card,
+    primary_driver_card,
+    recommendation_card,
+    action_plan,
+    history_table,
+    analytics_cards,
+    trend_card
+)
+
+from charts import (
+    stress_bar,
+    shap_chart,
+    shap_insights,
+    stress_trend,
+    wellness_progress
+)
+
+from simulator import (
+    habit_optimizer
+)
+
+from report import (
+    create_report
+)
+
+from utils import (
+    create_prediction_payload,
+    get_risk_color,
+    greeting
 )
 
 
-# 🎨 CALM UI THEME (SAGE + BLUE)
+# PAGE CONFIG
 
-st.markdown("""
-<style>
 
-/* Background */
-.main {
-    background-color: #f5f7f6;
-}
+st.set_page_config(
 
-/* Text */
-h1, h2, h3, p {
-    color: #1f2937;
-}
+    page_title="Stress SensAI",
 
-/* Cards */
-.metric-card {
-    padding: 20px;
-    border-radius: 16px;
-    background-color: #e6f4ea;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-    h1, h2, h3, p {
-        color: #000000;
-        }
-}
+    page_icon="🧠",
 
-.metric-card-blue {
-    padding: 20px;
-    border-radius: 16px;
-    background-color: #e0f2fe;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-    h1, h2, h3, p {
-        color: #000000;
-        }
-}
+    layout="wide"
 
-/* Button */
-.stButton>button {
-    background: linear-gradient(90deg, #60a5fa, #86efac);
-    color: #1f2937;
-    border-radius: 10px;
-    height: 48px;
-    font-size: 16px;
-    border: none;
-}
+)
 
-/* Sidebar */
-[data-testid="stSidebar"] {
-    background-color: #ecfdf5;
-    h1, h2, h3, p {
-            color: #000000;
-            }
-}
-            
-/* dropdown going behind */
-div[data-baseweb="select"] {
-    z-index: 9999 !important;
-}
+st.markdown(
 
-/* popover */
-div[data-baseweb="popover"] {
-    z-index: 9999 !important;
-}
-        
-/* Sidebar dropdown fix */
-section[data-testid="stSidebar"] {
-    z-index: 10000 !important;
-}
+    load_css(),
 
-/* Ensure sidebar content stays above */
-section[data-testid="stSidebar"] * {
-    z-index: 10000 !important;
-}
+    unsafe_allow_html=True
 
-</style>
-""", unsafe_allow_html=True)
+)
+
+
+# LOGIN
+
+
+require_login()
+
+token = get_token()
+
+# ===================================
+# SESSION STATE
+# ===================================
+
+if "analysis" not in st.session_state:
+    st.session_state["analysis"] = None
+
+
+# PROFILE
+
+
+profile = get_profile(
+
+    token
+
+).json()
+
+analytics = get_analytics(
+
+        token
+
+    ).json()
 
 
 # HEADER
 
-st.markdown("""
-# 🧠 Interpretable Stacked Ensemble for Personlized Stress Prediction
-### Personalized Stress Intelligence Platform
-""")
 
-st.caption("Calm UI • Explainable AI • Personalized Insights")
+hour = datetime.now().hour
 
+today = datetime.now().strftime("%d %B %Y")
 
-# SIDEBAR
+st.markdown(f"""
+<div class="hero-card">
 
-st.sidebar.title("⚙️ Controls")
+<h1 style="margin-bottom:5px;color:white;">
 
-input_type = st.sidebar.radio(
-    "Input Method",
-    ["Manual Input (3 Days)", "Upload CSV"]
+{greeting(hour)}, {profile["name"]} 👋
+
+</h1>
+
+<h3 style="color:white;font-weight:400;">
+
+Welcome back to <b>Stress SensAI</b>
+
+</h3>
+
+<p style="font-size:17px;color:white;opacity:.95;">
+
+🗓️ {today}
+
+<br>
+
+AI Powered Personalized Stress Intelligence Platform
+
+</p>
+
+</div>
+""", unsafe_allow_html=True)
+
+st.markdown(
+"""
+### 🌿 Your Personal Wellness Dashboard
+
+Monitor your stress, understand the contributing factors,
+and receive AI-powered recommendations to improve your wellbeing.
+"""
+)
+st.caption(
+
+f"Last Analysis: {datetime.now().strftime('%d %B %Y • %I:%M %p')}"
+
 )
 
 
-# MODELS
+# =====================================================
+# SIDEBAR
+# =====================================================
 
-def get_base_models():
-    return [
-        SVR(kernel="linear"),
-        Lasso(alpha=0.1),
-        RandomForestRegressor(n_estimators=100)
-    ]
+st.sidebar.markdown(
+f"""
+<div style="
+    background:white;
+    padding:22px;
+    border-radius:20px;
+    box-shadow:0 10px 25px rgba(0,0,0,.08);
+    margin-bottom:20px;
+    text-align:center;
+">
+
+<div style="font-size:55px;">
+👤
+</div>
+
+<h2 style="margin-bottom:0;">
+
+{profile["name"]}
+
+</h2>
+
+<p style="
+color:#6B7280;
+font-size:15px;
+">
+
+{profile["email"]}
+
+</p>
+
+<hr>
+
+</div>
+
+""",
+
+unsafe_allow_html=True
+
+)
+
+# ===================================
+# ACCOUNT SUMMARY
+# ===================================
+
+st.sidebar.markdown("### 📊 Account Summary")
+
+col1,col2 = st.sidebar.columns(2)
+
+with col1:
+
+    st.metric(
+
+        "Predictions",
+
+        analytics["total_predictions"]
+
+    )
+
+with col2:
+
+    st.metric(
+        "Wellness",
+        analytics["current"]
+
+    )
+
+st.sidebar.markdown("---")
+
+# ===================================
+# PROFILE UPDATE
+# ===================================
+
+st.sidebar.markdown("### ✏️ Update Profile")
+
+new_name = st.sidebar.text_input(
+
+    "Display Name",
+
+    value=profile["name"],
+
+    placeholder="Enter new name"
+
+)
+
+if st.sidebar.button(
+
+    "💾 Save Changes",
+
+    use_container_width=True
+
+):
+
+    response = update_profile(
+
+        token,
+
+        new_name
+
+    )
+
+    if response.status_code == 200:
+
+        st.sidebar.success(
+
+            "Profile Updated Successfully"
+
+        )
+
+        st.rerun()
+
+st.sidebar.markdown("---")
+
+# ===================================
+# INPUT METHOD
+# ===================================
+
+st.sidebar.markdown("### ⚙️ Input Method")
+
+input_type = st.sidebar.radio(
+
+    "",
+
+    (
+
+        "Manual Input (3 Days)",
+
+        "Upload CSV"
+
+    )
+
+)
+
+st.sidebar.markdown("---")
+
+logout_button()
+
+# INPUT TITLE
+
+
+st.markdown(
+"""
+<div style = "background:white; padding:25px;
+border-radius:22px;
+box-shadow:0 8px 20px rgba(0,0,0,.08);
+margin-bottom:20px;
+">
+
+
+<h2>
+
+📥 Behavioral Inputs
+
+</h2>
+
+<p style="color:#6B7280;">
+Enter your average behavioural data from the last 3 days.
+These values help the AI generate more stable and accurate predictions.
+</p>
+
+</div>
+
+""",
+
+unsafe_allow_html=True
+)
 
 
 # INPUT SECTION
 
-st.markdown("## 📥 Behavioral Input (3-Day Average)")
+
+payload = None
+
+screen = 0.0
+conversation = 0.0
+mobility = 0.0
+dark = 0.0
+app_usage = 0.0
+
+
+# MANUAL INPUT
+
 
 if input_type == "Manual Input (3 Days)":
 
-    def input_3day(feature, unit=""):
+    def average_input(
+
+        feature,
+
+        unit,
+
+        key
+
+    ):
 
         c1, c2, c3 = st.columns(3)
 
         with c1:
+
             d1 = st.number_input(
-                f"{feature} - Day 1 {unit}",
+
+                f"{feature} Day 1 {unit}",
+
                 min_value=0.0,
+
                 value=None,
-                placeholder="Enter value",
-                key=feature+"1"
+
+                placeholder="Enter Value",
+
+                key=f"{key}_1"
+
             )
 
         with c2:
+
             d2 = st.number_input(
-                f"{feature} - Day 2 {unit}",
+
+                f"{feature} Day 2 {unit}",
+
                 min_value=0.0,
+
                 value=None,
-                placeholder="Enter value",
-                key=feature+"2"
+
+                placeholder="Enter Value",
+
+                key=f"{key}_2"
+
             )
 
         with c3:
+
             d3 = st.number_input(
-                f"{feature} - Day 3 {unit}",
+
+                f"{feature} Day 3 {unit}",
+
                 min_value=0.0,
+
                 value=None,
-                placeholder="Enter value",
-                key=feature+"3"
+
+                placeholder="Enter Value",
+
+                key=f"{key}_3"
+
             )
 
         values = [d1, d2, d3]
-
-        # replace None with 0 safely
         values = [0 if v is None else v for v in values]
 
-        return sum(values) / 3
-    
-    screen = input_3day("Screen Time", "(minutes)")
-    conv = input_3day("Conversation", "(minutes)")
-    mobility = input_3day("Mobility", "(km)")
-    dark = input_3day("Dark Time", "(hours)")
-    app_usage = input_3day("App Usage", "(minutes)")
+        return round(sum(values) / 3, 2)
 
-    input_data = pd.DataFrame([[
+    screen = average_input(
+
+        "Screen Time",
+
+        "(minutes)",
+
+        "screen"
+
+    )
+
+    conversation = average_input(
+
+        "Conversation",
+
+        "(minutes)",
+
+        "conversation"
+
+    )
+
+    mobility = average_input(
+
+        "Mobility",
+
+        "(km)",
+
+        "mobility"
+
+    )
+
+    dark = average_input(
+
+        "Dark Time",
+
+        "(hours)",
+
+        "dark"
+
+    )
+
+    app_usage = average_input(
+
+        "App Usage",
+
+        "(minutes)",
+
+        "app"
+
+    )
+
+    payload = create_prediction_payload(
+
         screen,
-        conv,
+
+        conversation,
+
         mobility,
+
         dark,
+
         app_usage
-    ]], columns=[
-        "screen_time_total",
-        "average_conversation_duration",
-        "total_distance_km",
-        "avg_dark_time",
-        "app_usage"
-    ])
 
-    # screen = input_3day("Screen Time")
-    # conv = input_3day("Conversation")
-    # mobility = input_3day("Mobility")
-    # sleep = input_3day("Sleep")
-    # dark = input_3day("Dark Time")
+    )
 
-    # Baseline from 3-day data
-    # baseline = np.mean([screen, conv, mobility, sleep, dark])
 
-    # input_data = pd.DataFrame([[screen, conv, mobility, sleep, dark]])
+# CSV INPUT
+
 
 else:
-    uploaded_file = st.file_uploader("Upload CSV", type=["csv"])
-    
-    if uploaded_file:
-        input_data = pd.read_csv(uploaded_file)
 
-        # Ensure required columns exist
-        required_cols = [
-            "screen_time_total",
-            "average_conversation_duration",
-            "total_distance_km",
-            "avg_dark_time",
-            "app_usage"
-        ]
+    uploaded_file = st.file_uploader(
 
-        input_data = input_data[required_cols]
+        "Upload CSV",
 
-    else:
-        input_data = None
-        stress_avg = None
+        type=["csv"]
 
+    )
 
-# PREDICTION
+    if uploaded_file is not None:
 
-if st.button("🚀 Analyze Stress", use_container_width=True):
+        df = pd.read_csv(
 
-    if input_data is None:
-        st.warning("Please provide input data")
-    else:
-        
+            uploaded_file
 
-
-        payload = {
-            "screen_time_total": float(screen),
-            "average_conversation_duration": float(conv),
-            "total_distance_km": float(mobility),
-            "avg_dark_time": float(dark),
-            "app_usage": float(app_usage)
-        }
-
-        response = requests.post(
-            "http://127.0.0.1:8000/predict",
-            json=payload
         )
 
-        result = response.json()
+        required = [
 
-        pred = result["prediction"]
-        risk = result["risk"]
+            "screen_time_total",
+
+            "average_conversation_duration",
+
+            "total_distance_km",
+
+            "avg_dark_time",
+
+            "app_usage"
+
+        ]
+
+        missing = [
+
+            col
+
+            for col in required
+
+            if col not in df.columns
+
+        ]
+
+        if len(missing):
+
+            st.error(
+
+                f"Missing Columns : {missing}"
+
+            )
+
+            st.stop()
+
+        row = df.iloc[0]
+
+        screen = float(
+
+            row["screen_time_total"]
+
+        )
+
+        conversation = float(
+
+            row["average_conversation_duration"]
+
+        )
+
+        mobility = float(
+
+            row["total_distance_km"]
+
+        )
+
+        dark = float(
+
+            row["avg_dark_time"]
+
+        )
+
+        app_usage = float(
+
+            row["app_usage"]
+
+        )
+
+        payload = create_prediction_payload(
+
+            screen,
+
+            conversation,
+
+            mobility,
+
+            dark,
+
+            app_usage
+
+        )
+
+        st.success(
+
+            "CSV Loaded Successfully"
+
+        )
+
+
+# ANALYZE BUTTON
+
+
+st.markdown("<br>",unsafe_allow_html=True)
+
+analyze = st.button(
+
+    "🚀 Analyze Stress",
+
+    use_container_width=True
+
+)
+
+if analyze:
+
+    if payload is None:
+
+        st.warning(
+
+            "Please provide valid input."
+
+        )
+
+        st.stop()
+
+    with st.spinner("🧠 AI is analyzing your behavioural patterns..."):
+
+        response = predict(
+
+            token,
+
+            payload
+
+        )
+
+
+    if response.status_code != 200:
+
+        st.error(
+        """
+        Prediction failed.
+
+        Please verify:
+
+        • Backend server is running
+
+        • Model files exist
+
+        • You are logged in
+
+        • Input values are valid
+        """
+        )
+
+        st.stop()
+
+    result = response.json()
+
+    st.session_state["analysis"] = result
+
+    prediction = result["prediction"]
+
+    risk = result["risk"]
+
+    score = result["wellness_score"]
+
+    stars = result["stars"]
+
+    driver = result["primary_driver"]
+
+    actions = result["action_plan"]
+
+    shap_data = result["shap"]
+
+    color = get_risk_color(
+
+        risk
+
+    )
+
+    history = get_history(
+
+        token
+
+    ).json()
+
+    analytics = get_analytics(
+
+        token
+
+    ).json()
+
+# ===================================
+# LOAD LAST ANALYSIS
+# ===================================
+
+if st.session_state["analysis"] is not None:
+
+    result = st.session_state["analysis"]
+
+    prediction = result["prediction"]
+
+    risk = result["risk"]
+
+    score = result["wellness_score"]
+
+    stars = result["stars"]
+
+    driver = result["primary_driver"]
+
+    actions = result["action_plan"]
+
+    shap_data = result["shap"]
+
+    color = get_risk_color(risk)
+
+    history = get_history(token).json()
+
+    analytics = get_analytics(token).json()
+
+
+# =====================================================
+# RESULTS DASHBOARD
+# =====================================================
+
+    st.markdown("---")
+
+    st.markdown("# 📊 AI Stress Analysis")
+
+    # -----------------------------------------------------
+
+    left,right = st.columns([1,1])
+
+    with left:
+
+        metric_cards(
+
+            prediction,
+
+            "ElasticNet Stacked Ensemble",
+
+            risk,
+
+            color
+
+        )
+
+    with right:
+
+        wellness_card(
+            score,
+            stars
+        )
+
+        wellness_progress(
+            score
+        )
+
+    # -----------------------------------------------------
+
+    st.markdown("<br>",unsafe_allow_html=True)
+
+    left,right = st.columns([1,1])
+
+    with left:
+
+        primary_driver_card(
+
+            driver
+
+        )
+
+    with right:
+
+        recommendation_card(
+
+            driver
+
+        )
+
+    # -----------------------------------------------------
+
+    st.markdown("<br>",unsafe_allow_html=True)
+
+    action_plan(
+
+        actions
+
+    )
+
+    # -----------------------------------------------------
+
+    st.markdown("<br>",unsafe_allow_html=True)
+
+    stress_bar(
+
+        prediction
+
+    )
+
+
+# =====================================================
+# AI EXPLAINABILITY
+# =====================================================
+
+    st.markdown("---")
+
+    st.markdown("# 🧠 AI Explainability & Analytics")
+
+    # =====================================================
+    # ROW 1
+    # =====================================================
+
+    left,right = st.columns([1.2,1])
+
+    with left:
+
+        shap_df = shap_chart(
+
+            shap_data
+
+        )
+
+    with right:
+
+        shap_insights(
+
+            shap_df
+
+        )
+
+    # =====================================================
+    # ROW 2
+    # =====================================================
+
+    st.markdown("<br>",unsafe_allow_html=True)
+
+    left,right = st.columns([1,1])
+
+    if analytics["total_predictions"] == 0:
         
-        if risk == "Low":
-            color = "#22c55e"
-        elif risk == "Medium":
-            color = "#eab308"
-        else:
-            color = "#ef4444"
+        st.info(
+            """
+    📊 Analytics will appear after your first prediction.
+    """
+        )
 
-        record = {
-            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M"),
-            "prediction": float(pred),
-            "screen_time": float(screen),
-            "conversation": float(conv),
-            "mobility": float(mobility),
-            "dark_time": float(dark),
-            "app_usage": float(app_usage)
-        }
+    else:
 
-        history_file = "history.json"
+        with left:
+#analytics summary
+            analytics_cards(
 
-        if os.path.exists(history_file):
+                analytics
 
-            with open(history_file, "r") as f:
-                history =json.load(f)
-        else:
-            history = []
-            
-        history.append(record)
+            )
 
-        with open(history_file, "w") as f:
-            json.dump(history, f, indent=4)
+        with right:
+#stress trend
+            trend_card(
+
+                history
+
+            )
+
+    # =====================================================
+    # ROW 3
+    # =====================================================
+
+    st.markdown("<br>",unsafe_allow_html=True)
+
+    #recent prediction
+
+    if len(history) == 0:
+
+        st.info(
+            """
+    📝 No prediction history available yet.
+
+    Run your first stress analysis to begin tracking your progress.
+    """
+        )
+
+    else:
+
+        history_table(
+            history[-5:]
+        )
+
+        stress_trend(
+            history
+        )
 
 
+# HABIT OPTIMIZER
 
 
-        
-        # OUTPUT
-        
-        st.markdown("## 📊 Insights")
+    habit_optimizer(
 
-        c1, c2, c3 = st.columns(3)
+        token,
 
-        with c1:
-            st.markdown(f"""
-            <div class="metric-card">
-            <h4>Predicted Stress</h4>
-            <h2>{pred:.2f}</h2>
-            </div>
-            """, unsafe_allow_html=True)
+        screen,
 
-        with c2:
-            st.markdown(f"""
-            <div class="metric-card-blue">
-            <h4>AI engine</h4>
-            <h2>ElasticNet Ensemble</h2>
-            </div>
-            """, unsafe_allow_html=True)
+        conversation,
 
-        with c3:
-            st.markdown(f"""
-            <div class="metric-card">
-            <h4>Risk Level</h4>
-            <h2 style="color:{color}">{risk}</h2>
-            </div>
-            """, unsafe_allow_html=True)
+        mobility,
 
-        
-        # VISUAL
-        
-        st.markdown("## 📈 Stress Bar")
+        dark,
 
-        chart = pd.DataFrame({
-            "Metric": ["Predicted Stress"],
-            "Value": [pred]
-        })
+        app_usage
 
-        st.bar_chart(chart.set_index("Metric"))
+    )
 
-        
-        # EXPLANATION
-        
-        st.markdown("## 🧠 AI Insights")
 
-        try:
-            # Fix input shape
-            X_input = np.array(X_input).reshape(1, -1)
+# =====================================================
+# EXPORT CENTER
+# =====================================================
 
-            rf_model = base_models[-1]
+    st.markdown("---")
 
-            explainer = shap.TreeExplainer(rf_model)
-            shap_values = explainer.shap_values(X_input)
+    st.markdown("# 📥 Export Center")
 
-            feature_names = [
-                "Screen Time",
-                "Conversation",
-                "Mobility",
-                "Dark Time",
-                "App Usage"
-            ]
+    st.caption(
+        "Download your complete stress analysis."
+    )
 
-            shap_df = pd.DataFrame({
-                "Feature": feature_names,
-                "Impact": shap_values[0]
-            })
+    pdf = create_report(
 
-            shap_df["abs"] = shap_df["Impact"].abs()
-            shap_df = shap_df.sort_values("abs", ascending=True)
+        prediction=prediction,
 
-            # Plot
-            fig, ax = plt.subplots()
-            ax.barh(shap_df["Feature"], shap_df["Impact"])
-            ax.set_title("Feature Contribution to Stress")
-            ax.set_xlabel("Impact")
+        risk=risk,
 
-            st.pyplot(fig)
+        wellness_score=score,
 
-            # Text explanation
-            st.markdown("### 🧠 Personalized Insights")
+        driver=driver,
 
-            top = shap_df.sort_values("abs", ascending=False).head(3)
+        analytics=analytics
 
-            for _, row in top.iterrows():
+    )
 
-                feature = row["Feature"]
-                impact = row["Impact"]
+    left,right = st.columns(2)
 
-                if feature == "Screen Time":
+    with left:
 
-                    if impact > 0:
-                        st.info(
-                            "Higher screen usage appears to be contributing to elevated stress levels."
-                        )
-                    else:
-                        st.success(
-                            "Screen usage patterns appear healthy and are helping reduce stress."
-                        )
+        st.markdown(
+            "### 📄 PDF Report"
+        )
 
-                elif feature == "Mobility":
+        st.caption(
+            "Prediction, wellness, analytics and recommendations."
+        )
 
-                    if impact > 0:
-                        st.info(
-                            "Lower physical activity may be contributing to increased stress."
-                        )
-                    else:
-                        st.success(
-                            "Regular movement and mobility are helping maintain lower stress."
-                        )
+        with open(pdf,"rb") as file:
 
-                elif feature == "Dark Time":
+            st.download_button(
 
-                    if impact > 0:
-                        st.info(
-                            "Rest and inactivity patterns may be influencing stress levels."
-                        )
-                    else:
-                        st.success(
-                            "Healthy rest patterns appear beneficial for stress management."
-                        )
+                "⬇ Download PDF",
 
-                elif feature == "Conversation":
+                file,
 
-                    st.info(
-                        "Social interaction patterns played an important role in this prediction."
-                    )
+                file_name="Stress_Report.pdf",
 
-                elif feature == "App Usage":
+                mime="application/pdf",
 
-                    if impact > 0:
-                        st.info(
-                            "Extended application usage may be contributing to increased stress."
-                        )
-                    else:
-                        st.success(
-                            "Application usage appears balanced and supportive of wellbeing."
-                        )
-            
+                use_container_width=True
 
-        except Exception as e:
-            st.error(f"SHAP ERROR: {e}")
+            )
 
-        st.markdown("Stress Trend")
+    with right:
 
-        if os.path.exists("history.json"):
+        st.markdown(
+            "### 📊 CSV History"
+        )
 
-            with open("history.json", "r") as f:
-                history = json.load(f)
+        st.caption(
+            "Complete prediction history."
+        )
 
-            if len(history) > 0:
+        history_df = pd.DataFrame(history)
 
-                history_df = pd.DataFrame(history)
+        csv = history_df.to_csv(
 
-                st.line_chart(
-                    history_df.set_index("timestamp")["prediction"]
-                )
+            index=False
 
-# ANALYTICS SUMMARY
+        ).encode(
 
-        avg_stress = history_df["prediction"].mean()
-        max_stress = history_df["prediction"].max()
-        min_stress = history_df["prediction"].min()
-        latest = history_df["prediction"].iloc[-1]
+            "utf-8"
 
-        st.markdown("### 📈📉Analytics Summary")
+        )
 
-        c1, c2, c3, c4 = st.columns(4)
+        st.download_button(
 
-        with c1:
-            st.metric("Current", f"{latest:.2f}")
+            "⬇ Download CSV",
 
-        with c2:
-            st.metric("Average", f"{avg_stress:.2f}")
+            csv,
 
-        with c3:
-            st.metric("Highest", f"{max_stress:.2f}")
+            file_name="Stress_History.csv",
 
-        with c4:
-            st.metric("Lowest", f"{min_stress:.2f}")
-        
-# TREND DETECTION
+            mime="text/csv",
 
-        if len(history_df) >= 2:
+            use_container_width=True
 
-            previous = history_df["prediction"].iloc[-2]
+        )
 
-            change = latest - previous
 
-            if change > 0:
-                st.warning(
-                    f"Stress increased by {change:.2f} compared to your previous entry."
-                )
+# FOOTER
 
-            elif change < 0:
-                st.success(
-                    f"Stress decreased by {abs(change):.2f} compared to your previous entry."
-                )
 
-            else:
-                st.info(
-                    "Stress level remained stable."
-                )
-                
-        st.success("Analysis complete ✔")
+    st.markdown("---")
 
-        st.download_button(...)
+    st.markdown("""
+
+    <div style="
+    background:white;
+    padding:28px;
+    border-radius:20px;
+    box-shadow:0 8px 20px rgba(0,0,0,.06);
+    text-align:center;
+    ">
+
+    <h2>
+    🧠 Stress SensAI
+    </h2>
+
+    <p style="color:#6B7280;">
+    AI Powered Personalized Stress Intelligence Platform
+    </p>
+
+    <hr>
+
+    <p>
+    Built with
+    <b>
+    FastAPI&nbsp;&nbsp;•&nbsp;&nbsp;
+    PostgreSQL&nbsp;&nbsp;•&nbsp;&nbsp;
+    Streamlit&nbsp;&nbsp;•&nbsp;&nbsp;
+    ElasticNet&nbsp;&nbsp;•&nbsp;&nbsp;
+    JWT Authentication
+    </b>
+    </p>
+
+    <p style="color:#9CA3AF;">
+    Version 2.0
+    </p>
+
+    </div>
+
+    """, unsafe_allow_html=True)
