@@ -5,6 +5,7 @@ __pycache__/
 *.py[cod]
 *.pyo
 *.pyd
+*.pyc
 
 # Virtual Environment
 
@@ -20,6 +21,15 @@ env/
 
 .vscode/
 .idea/
+
+# Generated Files
+
+history.json
+stress_report.pdf
+
+# Training
+
+catboost_info/
 
 # OS
 
