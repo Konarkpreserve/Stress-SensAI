@@ -13,8 +13,6 @@ def get_current_user(
 
     try:
 
-        print("TOKEN RECEIVED:", token)
-
         payload = jwt.decode(
             token,
             SECRET_KEY,

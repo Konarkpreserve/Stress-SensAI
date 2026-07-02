@@ -1,6 +1,6 @@
 import streamlit as st
 
-from api import login
+from api import login, register
 
 
 def initialize_session():
@@ -24,108 +24,179 @@ def login_screen():
             box-shadow:0 12px 35px rgba(0,0,0,.15);
             border:1px solid #E5E7EB;
         ">
-        <h1 style="text-align:center;">
-        🧠 Stress SensAI
-        </h1>
-
-        <p style="
-        text-align:center;
-        color:#6B7280;
-        font-size:18px;
-        ">
-
-        Personalized Stress Intelligence Platform
-
-        </p>
-
+            <h1 style="text-align:center;">
+                🧠 Stress SensAI
+            </h1>
+            <p style="
+                text-align:center;
+                color:#6B7280;
+                font-size:18px;
+            ">
+                Personalized Stress Intelligence Platform
+            </p>
         </div>
         """,
         unsafe_allow_html=True
     )
 
+    if "page" not in st.session_state:
+        st.session_state.page = "login"
+
+    if "message" not in st.session_state:
+        st.session_state.message = ""
+
+    if "registered_email" not in st.session_state:
+        st.session_state.registered_email = ""
+
     left, center, right = st.columns([1,2,1])
 
     with center:
 
-        email = st.text_input(
+        if st.session_state.message:
 
-            "📧 Email",
+            st.success(st.session_state.message)
 
-            placeholder="example@gmail.com"
+            st.session_state.message = ""
 
-        )
+        c1, c2 = st.columns(2)
 
-        password = st.text_input(
+        with c1:
 
-            "🔒 Password",
-
-            type="password",
-
-            placeholder="Enter Password"
-
-        )
-
-        st.markdown("<br>",unsafe_allow_html=True)
-
-        if st.button(
-
-            "Login",
-
-            use_container_width=True
-
-        ):
-
-            response = login(
-
-                email,
-
-                password
-
-            )
-
-            result = response.json()
-
-            if (
-
-                response.status_code==200
-
-                and
-
-                "access_token" in result
-
+            if st.button(
+                "🔑 Login",
+                use_container_width=True
             ):
-
-                st.session_state["token"] = result["access_token"]
-
-                st.success(
-
-                    "Login Successful"
-
-                )
-
+                st.session_state.page = "login"
                 st.rerun()
 
-            else:
+        with c2:
 
-                st.error(
+            if st.button(
+                "📝 Register",
+                use_container_width=True
+            ):
+                st.session_state.page = "register"
+                st.rerun()
 
-                    "Invalid Email or Password"
+        st.markdown("---")
 
+        #login form
+
+        if st.session_state.page == "login":
+
+            with st.form("login_form"):
+
+                email = st.text_input(
+                    "📧 Email",
+                    value=st.session_state.registered_email,
+                    placeholder="Enter your email"
                 )
 
-        st.markdown(
-            """
-            <br>
+                password = st.text_input(
+                    "🔒 Password",
+                    type="password"
+                )
 
-            <center>
+                login_btn = st.form_submit_button(
+                    "Login",
+                    type="primary",
+                    use_container_width=True,
+                )
 
-            🔒 Secure AI Powered Platform
+            if login_btn:
 
-            </center>
+                response = login(
+                    email,
+                    password
+                )
 
-            """,
-            unsafe_allow_html=True
-        )
+                try:
+                    result = response.json()
+                except Exception:
+                    result = {}
+
+                if (
+                    response.status_code == 200
+                    and
+                    "access_token" in result
+                ):
+
+                    st.session_state["token"] = result["access_token"]
+
+                    st.session_state.registered_email = ""
+
+                    st.rerun()
+
+                else:
+
+                    st.error(
+                        "Invalid Email or Password"
+                    )
+
+        #register form
+
+        else:
+
+            with st.form("register_form"):
+
+                name = st.text_input(
+                    "👤 Name",
+                    placeholder="Enter your name"
+                )
+
+                email = st.text_input(
+                    "📧 Email",
+                    placeholder="Enter your email"
+                )
+
+                password = st.text_input(
+                    "🔒 Password",
+                    type="password",
+                    placeholder="Create password"
+                )
+
+                register_btn = st.form_submit_button(
+                    "Create Account",
+                    use_container_width=True,
+                    type="primary"
+                )
+
+            if register_btn:
+
+                response = register(
+                    name,
+                    email,
+                    password
+                )
+
+                if response.status_code == 200:
+
+                    st.session_state.registered_email = email
+
+                    st.session_state.message = (
+                        "✅ Account created successfully! Please login."
+                    )
+
+                    st.session_state.page = "login"
+
+                    st.rerun()
+
+                else:
+
+                    try:
+
+                        detail = response.json().get(
+                            "detail",
+                            "Registration Failed"
+                        )
+
+                        st.error(detail)
+
+                    except Exception:
+
+                        st.error(
+                            "Registration Failed"
+                        )
 
     st.stop()
 

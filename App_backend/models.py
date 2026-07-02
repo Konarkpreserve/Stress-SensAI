@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, Float, String, DateTime
+from sqlalchemy import Column, Integer, Float, String, DateTime, ForeignKey
 from sqlalchemy.sql import func
 
 from database import Base
@@ -9,11 +9,11 @@ class User(Base):
 
     id = Column(Integer, primary_key=True, index=True)
 
-    name = Column(String)
+    name = Column(String, nullable=False)
 
-    email = Column(String, unique=True)
+    email = Column(String, unique=True, nullable=False, index=True)
 
-    password_hash = Column(String)
+    password_hash = Column(String, nullable=False)
 
 class Prediction(Base):
 
@@ -21,23 +21,23 @@ class Prediction(Base):
 
     id = Column(Integer, primary_key=True, index=True)
 
-    user_id = Column(Integer)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
 
     timestamp = Column(
         DateTime(timezone=True),
         server_default=func.now()
     )
 
-    prediction = Column(Float)
+    prediction = Column(Float, nullable=False)
 
-    risk = Column(String)
+    risk = Column(String, nullable=False)
 
-    screen_time = Column(Float)
+    screen_time = Column(Float, nullable=False)
 
-    conversation = Column(Float)
+    conversation = Column(Float, nullable=False)
 
-    mobility = Column(Float)
+    mobility = Column(Float, nullable=False)
 
-    dark_time = Column(Float)
+    dark_time = Column(Float, nullable=False)
 
-    app_usage = Column(Float)
+    app_usage = Column(Float, nullable=False)

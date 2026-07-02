@@ -6,6 +6,7 @@ __pycache__/
 *.pyo
 *.pyd
 *.pyc
+*$py.class
 
 # Virtual Environment
 
@@ -16,6 +17,8 @@ env/
 # Environment Variables
 
 .env
+.env.example
+*.env
 
 # IDE
 
@@ -40,6 +43,7 @@ Thumbs.db
 
 .pytest_cache/
 .ipynb_checkpoints/
+.mypy_cache/
 
 # Logs
 
@@ -53,3 +57,9 @@ dist/
 # Docker
 
 *.tar
+postgres_data/
+
+#streamlit
+
+.streamlit/
+

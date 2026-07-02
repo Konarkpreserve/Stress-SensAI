@@ -395,6 +395,8 @@ BUTTON
 
 }
 
+
+
 /* ============================================
 DOWNLOAD BUTTON
 ============================================ */
@@ -595,5 +597,12 @@ section[data-testid="stSidebar"] *{
 
 }
 
+div[role="tablist"]{
+
+    display:flex !important;
+
+    gap:8px !important;
+
+}
 </style>
 """

@@ -1,11 +1,13 @@
 from auth import hash_password, verify_password
 from security import create_access_token
 from database import SessionLocal
+from database import engine, Base
 from models import User, Prediction
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from dependencies import get_current_user
+from logging_config import logger
 from ai_engine import (
     get_primary_driver,
     get_action_plan,
@@ -14,6 +16,7 @@ from ai_engine import (
 )
 from sqlalchemy import text
 
+import models
 import joblib
 import numpy as np
 import pandas as pd
@@ -28,6 +31,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+Base.metadata.create_all(bind=engine)
+logger.info("Stress SensAI backend initialized.")
+
 ##load models
 base_models = joblib.load("models/base_models.pkl")
 scaler = joblib.load("models/scaler.pkl")
@@ -334,6 +341,11 @@ def predict(
 
     db.commit()
 
+    logger.info(
+        f"Prediction generated | User={user['user_id']} | "
+        f"Stress={prediction} | Risk={risk}"
+    )
+
 
 # SHAP
 
@@ -553,6 +565,8 @@ def register(
 
     db.refresh(user)
 
+    logger.info(f"User created successfully: {user.email}")
+
     return {
 
         "message":"User created successfully",
@@ -606,6 +620,8 @@ def login(
         user.password_hash
 
     ):
+        
+        logger.warning(f"Failed login attempt: {user.email}")
 
         raise HTTPException(
 
@@ -614,6 +630,8 @@ def login(
             detail="Invalid email or password"
 
         )
+    
+    logger.info(f"User {user.id} logged in successfully")
 
     token=create_access_token({
 
@@ -1025,9 +1043,13 @@ def health():
 
         database_status="Connected"
 
+        logger.info("Database connection is healthy.")
+
     except Exception:
 
         database_status="Disconnected"
+
+        logger.error("Database connection is failed: {e}")
 
     return{
 
@@ -1180,6 +1202,10 @@ def delete_history(
     )
 
     db.commit()
+
+    logger.info(
+        f"Prediction history deleted for user {user['user_id']}"
+    )
 
     return{
 

@@ -1,0 +1,35 @@
+# Python
+
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*$py.class
+
+# Git
+
+.git
+.gitignore
+
+# IDE
+
+.vscode
+.idea
+
+# Generated Files
+
+history.json
+stress_report.pdf
+
+# Environment
+
+.env
+
+# Logs
+
+*.log
+
+# Build
+
+build/
+dist/

@@ -1,0 +1,103 @@
+
+# database
+services:
+
+  db:
+    image: postgres:17
+
+    container_name: stress_db
+
+    restart: always
+
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+    networks:
+      - stress_network
+
+    healthcheck:
+      test: ["CMD-SHELL",
+      "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"
+      ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+# Backend fastapi
+
+  backend:
+
+    build:
+      context: ./App_backend
+
+    container_name: stress_backend
+
+    restart: always
+
+    depends_on:
+      db:
+        condition: service_healthy
+
+    env_file:
+      - ./App_backend/.env
+
+    environment:
+      DOCKER: "true"
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+
+    ports:
+      - "8000:8000"
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+    networks:
+      - stress_network
+
+# Frontend streamlit
+
+  frontend:
+
+    build:
+      context: ./App_frontend
+
+    container_name: stress_frontend
+
+    restart: always
+
+    depends_on:
+      - backend
+
+    environment:
+      BACKEND_URL: http://backend:8000
+
+    ports:
+      - "8501:8501"
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+    networks:
+      - stress_network
+
+volumes:
+  postgres_data:
+
+networks:
+  stress_network:

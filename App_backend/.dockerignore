@@ -1,0 +1,46 @@
+# Python
+
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*$py.class
+
+# Environment
+
+.env
+
+# Git
+
+.git
+.gitignore
+
+# IDE
+
+.vscode
+.idea
+
+# Logs
+
+*.log
+
+# Build
+
+build/
+dist/
+
+# Dataset
+
+../data/
+
+# Training Files
+
+models/train_save_models.py
+models/ensemble_multiple.py
+models/ensemble_xgboost.py
+
+# CatBoost
+
+../catboost_info
+
+training/

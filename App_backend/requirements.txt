@@ -25,3 +25,5 @@ shap
 reportlab
 
 requests
+
+argon2-cffi
