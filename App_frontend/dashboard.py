@@ -93,17 +93,12 @@ if "analysis" not in st.session_state:
 # PROFILE
 
 
-profile = get_profile(
-
-    token
-
-).json()
-
-analytics = get_analytics(
-
-        token
-
-    ).json()
+try:
+    profile = get_profile(token).json()
+    analytics = get_analytics(token).json()
+except Exception:
+    st.error("Unable to connect to the backend.")
+    st.stop()
 
 
 # HEADER
@@ -280,15 +275,13 @@ st.sidebar.markdown("### ⚙️ Input Method")
 
 input_type = st.sidebar.radio(
 
-    "",
+    "Input Method",
 
-    (
-
+    [
         "Manual Input (3 Days)",
-
         "Upload CSV"
-
-    )
+    ],
+    label_visibility="collapsed"
 
 )
 
