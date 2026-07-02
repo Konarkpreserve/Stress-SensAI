@@ -32,7 +32,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-Base.metadata.create_all(bind=engine)
 logger.info("Stress SensAI backend initialized.")
 
 ##load models

@@ -31,10 +31,14 @@ RUN pip install --upgrade pip && \
 
 COPY . .
 
+# Make startup script executable
+
+RUN chmod +x start.sh
+
 # Expose Port
 
 EXPOSE 8000
 
 # Start FastAPI
 
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["./start.sh"]

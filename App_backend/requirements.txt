@@ -27,3 +27,5 @@ reportlab
 requests
 
 argon2-cffi
+
+alembic
