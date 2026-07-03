@@ -59,7 +59,4 @@ dist/
 *.tar
 postgres_data/
 
-#streamlit
-
-.streamlit/
 
