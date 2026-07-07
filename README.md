@@ -3,6 +3,8 @@
 # 🧠 Stress SensAI
 
 ### AI-Powered Personalized Stress Intelligence Platform
+
+
 Predict • Analyze • Understand • Improve
 [![Frontend](https://img.shields.io/badge/🌐%20Live%20Demo-Stress%20SensAI-success?style=for-the-badge)](https://stress-sensai.streamlit.app/)
 [![Backend](https://img.shields.io/badge/⚡%20Backend-Render-blue?style=for-the-badge)](https://stress-sensai.onrender.com)
