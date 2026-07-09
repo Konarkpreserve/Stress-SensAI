@@ -787,7 +787,7 @@ def get_history(
 
         .order_by(
 
-            Prediction.timestamp.desc()
+            Prediction.timestamp.asc()
 
         )
 

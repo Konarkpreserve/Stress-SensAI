@@ -861,7 +861,7 @@ if st.session_state["analysis"] is not None:
     else:
 
         history_table(
-            history[-5:]
+            history[-5:][::-1]
         )
 
         stress_trend(
